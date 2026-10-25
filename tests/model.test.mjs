@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {seed,createOrder,stockStatus,escapeHTML}from '../src/model.js';
+const input={customer:'Test',phone:'09170000000',address:'Sample address',shipping:'Standard',items:[{id:'SKU-001',qty:2}]};
+test('creates an order and reserves exactly the requested inventory',()=>{const s=structuredClone(seed);const o=createOrder(s,input);assert.equal(o.status,'Pending');assert.equal(o.id,'PK-100329');assert.equal(s.items[0].stock,118);assert.equal(s.orders.length,6)});
+test('rejects combined duplicate lines exceeding stock without mutation',()=>{const s=structuredClone(seed);assert.throws(()=>createOrder(s,{...input,items:[{id:'SKU-001',qty:70},{id:'SKU-001',qty:70}]}),/Insufficient/);assert.deepEqual(s,seed)});
+test('rejects missing customer and fractional quantities',()=>{assert.throws(()=>createOrder(structuredClone(seed),{...input,customer:''}));assert.throws(()=>createOrder(structuredClone(seed),{...input,items:[{id:'SKU-001',qty:1.5}]}))});
+test('stock boundaries and HTML escaping',()=>{assert.equal(stockStatus(0),'Out of Stock');assert.equal(stockStatus(49),'Low Stock');assert.equal(stockStatus(50),'In Stock');assert.equal(escapeHTML('<script>'),'&lt;script&gt;')});
